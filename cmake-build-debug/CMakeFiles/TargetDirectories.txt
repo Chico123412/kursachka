@@ -1,0 +1,3 @@
+/Users/billypick/Desktop/Kursova/cmake-build-debug/CMakeFiles/Kursova.dir
+/Users/billypick/Desktop/Kursova/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/billypick/Desktop/Kursova/cmake-build-debug/CMakeFiles/rebuild_cache.dir

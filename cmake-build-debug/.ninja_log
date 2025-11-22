@@ -1,0 +1,21 @@
+# ninja log v6
+6	501	1763741551024403417	CMakeFiles/Kursova.dir/TermBase.cpp.o	6dfb0270304ecd1f
+5	460	1763741551024184460	CMakeFiles/Kursova.dir/Utils.cpp.o	b4792143e12dc842
+6	471	1763741551024724998	CMakeFiles/Kursova.dir/PrimitiveTerm.cpp.o	5b28edeece4a544d
+6	552	1763741551025034037	CMakeFiles/Kursova.dir/UserManager.cpp.o	989ccf2aa29095ac
+5	426	1763734883750885562	CMakeFiles/Kursova.dir/User.cpp.o	acc343ecf7e67baf
+6	511	1763741551024571874	CMakeFiles/Kursova.dir/Term.cpp.o	d88d6bfa976f61fc
+5	555	1763741551023363758	CMakeFiles/Kursova.dir/main.cpp.o	53260469b9f02128
+6	492	1763741551024880663	CMakeFiles/Kursova.dir/TermManager.cpp.o	50be387c19b30fc
+582	694	1763734884328196651	Kursova	3cf3b7e3305f0021
+5	558	1763741671341686001	CMakeFiles/Kursova.dir/TermManager.cpp.o	50be387c19b30fc
+558	655	1763741671895349384	Kursova	3cf3b7e3305f0021
+7	449	1763742652315289030	CMakeFiles/Kursova.dir/Utils.cpp.o	b4792143e12dc842
+7	469	1763742652316105866	CMakeFiles/Kursova.dir/PrimitiveTerm.cpp.o	5b28edeece4a544d
+7	489	1763742652315631989	CMakeFiles/Kursova.dir/Term.cpp.o	d88d6bfa976f61fc
+6	528	1763742652314194986	CMakeFiles/Kursova.dir/main.cpp.o	53260469b9f02128
+8	542	1763742652316706325	CMakeFiles/Kursova.dir/UserManager.cpp.o	989ccf2aa29095ac
+8	630	1763742652316532700	CMakeFiles/Kursova.dir/TermManager.cpp.o	50be387c19b30fc
+630	725	1763742652938874035	Kursova	3cf3b7e3305f0021
+5	604	1763742759512943374	CMakeFiles/Kursova.dir/TermManager.cpp.o	50be387c19b30fc
+605	699	1763742760113152530	Kursova	3cf3b7e3305f0021
