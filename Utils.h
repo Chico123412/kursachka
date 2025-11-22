@@ -5,21 +5,26 @@
 #include <vector>
 
 namespace Utils {
+
+    // ASCII-only lowercase (для старих викликів)
     std::string ToLower(const std::string &s);
 
-    /// Обрізання пробілів з початку і кінця рядка
+    // Правильна версія для української/UTF-8
+    std::string ToLowerUTF8(const std::string &s);
+
+    // Обрізання пробілів
     std::string Trim(const std::string &s);
 
-    /// Розбиття рядка за заданим символом-роздільником
+    // Розбиття рядка
     std::vector<std::string> Split(const std::string &s, char delim);
 
-    /// Об’єднання рядків у один з роздільником
+    // Об’єднання рядків
     std::string Join(const std::vector<std::string> &parts, char delim);
 
-    /// Проста екранування символів ';' і ',' для CSV
+    // CSV escape
     std::string Escape(const std::string &s);
 
-    /// Зворотне екранування
+    // CSV unescape
     std::string Unescape(const std::string &s);
 
 }

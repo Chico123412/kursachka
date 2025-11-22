@@ -7,10 +7,6 @@
 #include <unordered_set>
 #include "TermBase.h"
 
-/**
- * Менеджер колекції термінів.
- * Відповідає за роботу з файлом, пошук, сортування, фільтрацію та побудову ланцюжків.
- */
 class TermManager {
 private:
     std::vector<std::shared_ptr<TermBase>> terms;
@@ -40,11 +36,18 @@ public:
 
     void SearchByDefinition(const std::string &substring) const;
 
-    /// Фільтр: вивести тільки первинні або тільки складні терміни
     void PrintFilteredByPrimitive(bool primitiveOnly) const;
 
-    /// Побудова ланцюжка від вибраного терміна до первинних понять
     void PrintChainFrom(const std::string &name) const;
+
+    // додано для захисту від видалення
+    bool IsReferenced(const std::string &name) const;
+
+    // додано для автозаповнення
+    void EnsureDefaultTerms();
+
+    // додано для статистики
+    void PrintStats() const;
 };
 
 #endif //KURSOVA_TERMMANAGER_H

@@ -171,6 +171,8 @@ void ShowMainMenu(const User &currentUser,
         std::cout << "11. Вивести складні терміни" << std::endl;
         std::cout << "12. Показати ланцюжок від терміна до первинних понять" << std::endl;
         std::cout << "13. Допомога" << std::endl;
+        std::cout << "14. Статистика бази термінів" << std::endl;
+
         if (currentUser.GetRole() == "admin") {
             std::cout << "20. Адміністрування користувачів" << std::endl;
         }
@@ -276,7 +278,13 @@ void ShowMainMenu(const User &currentUser,
             termManager.PrintChainFrom(name);
         } else if (choice == 13) {
             ShowHelp();
-        } else if (choice == 20 && currentUser.GetRole() == "admin") {
+        }
+        else if (choice == 14) {
+            termManager.PrintStats();
+        }
+
+
+         else if (choice == 20 && currentUser.GetRole() == "admin") {
             HandleAdminUserMenu(userManager);
         } else {
             std::cout << "Невідомий пункт меню." << std::endl;
