@@ -1,4 +1,2 @@
 admin:admin:admin
 Test:1234:user
-Mr:1:user
-Pipsik:2:user

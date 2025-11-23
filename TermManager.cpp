@@ -160,17 +160,25 @@ bool TermManager::EditDefinition(const std::string &name, const std::string &new
 // -------------------------------------------------------------
 void TermManager::SortByName() {
     std::sort(terms.begin(), terms.end(),
-              [](const std::shared_ptr<TermBase> &a, const std::shared_ptr<TermBase> &b) {
-                  return a->GetName() < b->GetName();
+              [](const std::shared_ptr<TermBase> &a,
+                 const std::shared_ptr<TermBase> &b)
+              {
+                  return Utils::ToLowerUTF8(a->GetName()) <
+                         Utils::ToLowerUTF8(b->GetName());
               });
 }
 
+
 void TermManager::SortByDefinition() {
     std::sort(terms.begin(), terms.end(),
-              [](const std::shared_ptr<TermBase> &a, const std::shared_ptr<TermBase> &b) {
-                  return a->GetDefinition() < b->GetDefinition();
+              [](const std::shared_ptr<TermBase> &a,
+                 const std::shared_ptr<TermBase> &b)
+              {
+                  return Utils::ToLowerUTF8(a->GetDefinition()) <
+                         Utils::ToLowerUTF8(b->GetDefinition());
               });
 }
+
 
 // -------------------------------------------------------------
 //                  PRINT SHORT LIST
