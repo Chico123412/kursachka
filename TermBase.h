@@ -2,12 +2,13 @@
 #define KURSOVA_TERMBASE_H
 
 #include <string>
+#include "ITermSerializable.h"   // 🔥 ПІДКЛЮЧАЄМО ІНТЕРФЕЙС
 
 /**
  * Абстрактний базовий клас терміна.
  * Інкапсулює спільні поля: назва терміна та його визначення.
  */
-class TermBase {
+class TermBase : public ITermSerializable {   // 🔥 СПАДКУЄ ІНТЕРФЕЙС
 protected:
     std::string name;
     std::string definition;
@@ -34,8 +35,8 @@ public:
     /// Чи є термін первинним поняттям
     virtual bool IsPrimitive() const = 0;
 
-    /// Серіалізація у рядок CSV
-    virtual std::string Serialize() const = 0;
+    /// 🟢 Методу Serialize тут БІЛЬШЕ НЕМАЄ —
+    ///     він тепер приходить з ITermSerializable
 };
 
 #endif //KURSOVA_TERMBASE_H

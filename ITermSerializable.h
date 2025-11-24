@@ -9,8 +9,9 @@
 class ITermSerializable {
 public:
     virtual ~ITermSerializable() = default;
-    virtual std::string serialize() const = 0;
-    virtual void deserialize(const std::string& line) = 0;
+
+    //  Використовується всюди в проекті  PascalCase
+    virtual std::string Serialize() const = 0;
 };
 
 #endif // ITERM_SERIALIZABLE_H
