@@ -65,44 +65,41 @@ void ShowHelp() {
 // Меню адміністрування користувачів
 void HandleAdminUserMenu(UserManager &userManager) {
     while (true) {
-        Banner("МЕНЮ АДМІНІСТРАТОРА — КОРИСТУВАЧІВ");
-        std::cout
-            << "1. Переглянути користувачів\n"
-            << "2. Додати користувача\n"
-            << "3. Видалити користувача\n"
-            << "0. Назад\n"
-            << "-----------------------------------------------\n"
-            << "Ваш вибір: ";
+        std::cout << "\n=== Меню адміністратора (користувачі) ===" << std::endl;
+        std::cout << "1. Переглянути користувачів" << std::endl;
+        std::cout << "2. Додати користувача" << std::endl;
+        std::cout << "3. Додати адміністратора" << std::endl;   // ← ДОДАНО
+        std::cout << "4. Видалити користувача" << std::endl;
+        std::cout << "0. Назад" << std::endl;
+        std::cout << "Вибір: ";
 
         int choice;
         if (!(std::cin >> choice)) {
             ClearCin();
-            std::cout << "Некоректне введення.\n";
-            Pause();
+            std::cout << "Некоректне введення." << std::endl;
             continue;
         }
         ClearCin();
 
-        if (choice == 0) return;
-
-        if (choice == 1) {
-            Banner("СПИСОК КОРИСТУВАЧІВ");
-            const auto &users = userManager.GetUsers();
-            if (users.empty()) {
-                std::cout << "Користувачів поки немає.\n";
-            } else {
-                for (const auto &u : users) {
-                    std::cout << " • " << u.GetUsername()
-                              << " (роль: " << u.GetRole() << ")\n";
-                }
-            }
-            Pause();
+        if (choice == 0) {
+            return;
         }
-        else if (choice == 2) {
-            Banner("ДОДАВАННЯ КОРИСТУВАЧА");
 
-            std::string username, password, role;
-            std::cout << "Логін: ";
+        // Перегляд користувачів
+        if (choice == 1) {
+            const auto &users = userManager.GetUsers();
+            std::cout << "=== Зареєстровані користувачі ===" << std::endl;
+            for (const auto &u : users) {
+                std::cout << "- " << u.GetUsername()
+                          << " (роль: " << u.GetRole() << ")" << std::endl;
+            }
+        }
+
+        // Додавання звичайного користувача
+        else if (choice == 2) {
+            std::string username, password;
+
+            std::cout << "Логін нового користувача: ";
             std::getline(std::cin, username);
             username = Utils::Trim(username);
 
@@ -110,71 +107,54 @@ void HandleAdminUserMenu(UserManager &userManager) {
             std::getline(std::cin, password);
             password = Utils::Trim(password);
 
-            std::string password2;
-            std::cout << "Повторіть пароль: ";
-            std::getline(std::cin, password2);
-            password2 = Utils::Trim(password2);
-
-            if (username.empty() || password.empty() || password2.empty()) {
-                std::cout << "Помилка: логін і паролі не можуть бути порожніми.\n";
-                Pause();
-                continue;
-            }
-
-            if (password != password2) {
-                std::cout << "Паролі не збігаються.\n";
-                Pause();
-                continue;
-            }
-
-            std::cout << "Роль (admin/user): ";
-            std::getline(std::cin, role);
-            role = Utils::Trim(role);
-
-            if (role != "admin" && role != "user") {
-                std::cout << "Некоректна роль. Дозволено: admin або user.\n";
-                Pause();
-                continue;
-            }
-
-            if (userManager.AddUser(username, password, role)) {
-                std::cout << "Користувача додано.\n";
+            if (userManager.AddUser(username, password, "user")) {
+                std::cout << "Користувача додано." << std::endl;
                 userManager.Save();
             } else {
-                std::cout << "Користувач із таким логіном уже існує.\n";
+                std::cout << "Користувач уже існує." << std::endl;
             }
-            Pause();
         }
-        else if (choice == 3) {
-            Banner("ВИДАЛЕННЯ КОРИСТУВАЧА");
 
-            std::string username;
-            std::cout << "Введіть логін користувача: ";
+        // Додавання адміністратора (НОВИЙ ПУНКТ)
+        else if (choice == 3) {
+            std::string username, password;
+
+            std::cout << "Логін нового адміністратора: ";
             std::getline(std::cin, username);
             username = Utils::Trim(username);
 
-            std::string confirm;
-            std::cout << "Видалити '" << username << "'? (y/n): ";
-            std::getline(std::cin, confirm);
+            std::cout << "Пароль: ";
+            std::getline(std::cin, password);
+            password = Utils::Trim(password);
 
-            if (confirm == "y" || confirm == "Y") {
-                if (userManager.RemoveUser(username)) {
-                    std::cout << "Користувача видалено.\n";
-                    userManager.Save();
-                } else {
-                    std::cout << "Користувача не знайдено або видалення заборонено.\n";
-                }
+            if (userManager.AddUser(username, password, "admin")) {
+                std::cout << "Адміністратора успішно додано." << std::endl;
+                userManager.Save();
             } else {
-                std::cout << "Операцію скасовано.\n";
+                std::cout << "Користувач уже існує." << std::endl;
             }
-            Pause();
         }
+
+        // Видалення користувача
+        else if (choice == 4) {
+            std::string username;
+            std::cout << "Введіть логін користувача для видалення: ";
+            std::getline(std::cin, username);
+
+            if (userManager.RemoveUser(username)) {
+                std::cout << "Користувача видалено." << std::endl;
+                userManager.Save();
+            } else {
+                std::cout << "Не знайдено або видалення заборонено." << std::endl;
+            }
+        }
+
         else {
-            std::cout << "Невідомий пункт меню.\n";
-            Pause();
+            std::cout << "Невідомий пункт." << std::endl;
         }
     }
 }
+
 
 // Додавання терміна
 void HandleAddTerm(TermManager &termManager) {
