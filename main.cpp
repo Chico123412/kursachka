@@ -9,294 +9,233 @@
 #include "PrimitiveTerm.h"
 #include "Utils.h"
 
-// Пауза після операції
+// ----------------------------------------------------------
+// СЛУЖБОВІ ФУНКЦІЇ
+// ----------------------------------------------------------
+
 void Pause() {
     std::cout << "\n(Натисніть Enter, щоб продовжити...)";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-// Очищення вводу після помилки
 void ClearCin() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-// Красива шапка розділу
 void Banner(const std::string &title) {
     std::cout << "\n===============================================" << std::endl;
     std::cout << "  " << title << std::endl;
     std::cout << "===============================================" << std::endl;
 }
 
-// Допомога
+// ----------------------------------------------------------
+// ДОПОМОГА
+// ----------------------------------------------------------
+
 void ShowHelp() {
     Banner("ДОПОМОГА");
+
     std::cout
-        << "Це консольна система для керування базою термінів.\n"
+        << "Це консольна система керування базою термінів.\n"
         << "Підтримуються первинні та складні терміни, пошук,\n"
         << "сортування, редагування, побудова ланцюжків.\n\n"
         << "Файли:\n"
-        << " • terms.csv — база термінів (PRIM/TERM)\n"
-        << " • users.txt — список користувачів\n\n"
+        << " • terms.csv — база термінів\n"
+        << " • users.txt — користувачі\n\n"
         << "Стартове меню:\n"
         << "  1. Увійти\n"
-        << "  2. Створити нового користувача\n"
+        << "  2. Створити користувача\n"
         << "  3. Допомога\n"
         << "  0. Вихід\n\n"
-        << "Головне меню після входу:\n"
-        << "  1. Список термінів (коротко)\n"
-        << "  2. Список термінів (повний)\n"
-        << "  3. Пошук за назвою\n"
-        << "  4. Пошук у визначеннях\n"
-        << "  5. Додати термін\n"
-        << "  6. Редагувати визначення\n"
-        << "  7. Видалити термін\n"
-        << "  8. Сортування за назвою\n"
-        << "  9. Сортування за визначенням\n"
-        << " 10. Первинні терміни\n"
-        << " 11. Складні терміни\n"
-        << " 12. Ланцюжок терміна\n"
-        << " 13. Допомога\n"
-        << " 14. Статистика\n"
-        << " 20. Користувачі (для admin)\n";
+        << "Права доступу:\n"
+        << "  Користувач — може тільки переглядати.\n"
+        << "  Адмін — може додавати, редагувати, видаляти терміни та\n"
+        << "           керувати користувачами.\n";
+
     Pause();
 }
 
-// Меню адміністрування користувачів
+// ----------------------------------------------------------
+// МЕНЮ АДМІНІСТРАТОРА
+// ----------------------------------------------------------
+
 void HandleAdminUserMenu(UserManager &userManager) {
     while (true) {
-        std::cout << "\n=== Меню адміністратора (користувачі) ===" << std::endl;
-        std::cout << "1. Переглянути користувачів" << std::endl;
-        std::cout << "2. Додати користувача" << std::endl;
-        std::cout << "3. Додати адміністратора" << std::endl;   // ← ДОДАНО
-        std::cout << "4. Видалити користувача" << std::endl;
-        std::cout << "0. Назад" << std::endl;
-        std::cout << "Вибір: ";
+        Banner("МЕНЮ АДМІНА — КОРИСТУВАЧІ");
+        std::cout
+            << "1. Переглянути користувачів\n"
+            << "2. Додати користувача\n"
+            << "3. Додати адміністратора\n"
+            << "4. Видалити користувача\n"
+            << "0. Назад\n"
+            << "Ваш вибір: ";
 
         int choice;
         if (!(std::cin >> choice)) {
             ClearCin();
-            std::cout << "Некоректне введення." << std::endl;
+            std::cout << "Некоректне введення.\n";
             continue;
         }
         ClearCin();
 
-        if (choice == 0) {
-            return;
-        }
+        if (choice == 0) return;
 
-        // Перегляд користувачів
         if (choice == 1) {
-            const auto &users = userManager.GetUsers();
-            std::cout << "=== Зареєстровані користувачі ===" << std::endl;
-            for (const auto &u : users) {
+            Banner("СПИСОК КОРИСТУВАЧІВ");
+            for (auto &u : userManager.GetUsers()) {
                 std::cout << "- " << u.GetUsername()
-                          << " (роль: " << u.GetRole() << ")" << std::endl;
+                          << "  (роль: " << u.GetRole() << ")\n";
             }
+            Pause();
         }
-
-        // Додавання звичайного користувача
         else if (choice == 2) {
-            std::string username, password;
-
+            std::string login, pass;
             std::cout << "Логін нового користувача: ";
-            std::getline(std::cin, username);
-            username = Utils::Trim(username);
+            std::getline(std::cin, login);
+            login = Utils::Trim(login);
 
             std::cout << "Пароль: ";
-            std::getline(std::cin, password);
-            password = Utils::Trim(password);
+            std::getline(std::cin, pass);
 
-            if (userManager.AddUser(username, password, "user")) {
-                std::cout << "Користувача додано." << std::endl;
+            if (userManager.AddUser(login, pass, "user")) {
+                std::cout << "Користувача додано.\n";
                 userManager.Save();
             } else {
-                std::cout << "Користувач уже існує." << std::endl;
+                std::cout << "Такий користувач вже існує.\n";
             }
+            Pause();
         }
-
-        // Додавання адміністратора (НОВИЙ ПУНКТ)
         else if (choice == 3) {
-            std::string username, password;
-
+            std::string login, pass;
             std::cout << "Логін нового адміністратора: ";
-            std::getline(std::cin, username);
-            username = Utils::Trim(username);
+            std::getline(std::cin, login);
+            login = Utils::Trim(login);
 
             std::cout << "Пароль: ";
-            std::getline(std::cin, password);
-            password = Utils::Trim(password);
+            std::getline(std::cin, pass);
 
-            if (userManager.AddUser(username, password, "admin")) {
-                std::cout << "Адміністратора успішно додано." << std::endl;
+            if (userManager.AddUser(login, pass, "admin")) {
+                std::cout << "Адміна додано.\n";
                 userManager.Save();
             } else {
-                std::cout << "Користувач уже існує." << std::endl;
+                std::cout << "Такий користувач вже існує.\n";
             }
+            Pause();
         }
-
-        // Видалення користувача
         else if (choice == 4) {
-            std::string username;
-            std::cout << "Введіть логін користувача для видалення: ";
-            std::getline(std::cin, username);
+            std::string login;
+            std::cout << "Кого видалити (логін): ";
+            std::getline(std::cin, login);
 
-            if (userManager.RemoveUser(username)) {
-                std::cout << "Користувача видалено." << std::endl;
+            if (userManager.RemoveUser(login)) {
+                std::cout << "Видалено.\n";
                 userManager.Save();
             } else {
-                std::cout << "Не знайдено або видалення заборонено." << std::endl;
+                std::cout << "Користувача не знайдено.\n";
             }
+            Pause();
         }
-
         else {
-            std::cout << "Невідомий пункт." << std::endl;
+            std::cout << "Невідомий пункт.\n";
+            Pause();
         }
     }
 }
 
+// ----------------------------------------------------------
+// ДОДАВАННЯ ТЕРМІНА
+// ----------------------------------------------------------
 
-// Додавання терміна
 void HandleAddTerm(TermManager &termManager) {
     Banner("ДОДАВАННЯ ТЕРМІНА");
 
-    std::cout << "Оберіть тип:\n"
-              << "  1. Первинне поняття\n"
-              << "  2. Складний термін (з посиланнями)\n"
+    std::cout << "1. Первинний термін\n"
+              << "2. Складний термін\n"
               << "Ваш вибір: ";
 
-    int type;
-    if (!(std::cin >> type)) {
+    int t;
+    if (!(std::cin >> t)) {
         ClearCin();
-        std::cout << "Некоректне введення.\n";
+        std::cout << "Помилка.\n";
         Pause();
         return;
     }
     ClearCin();
 
-    std::string name, definition;
-    std::cout << "Назва терміна: ";
+    std::string name, def;
+    std::cout << "Назва: ";
     std::getline(std::cin, name);
-    name = Utils::Trim(name);
 
-    std::cout << "Визначення:\n> ";
-    std::getline(std::cin, definition);
-    definition = Utils::Trim(definition);
+    std::cout << "Визначення: ";
+    std::getline(std::cin, def);
 
-    if (name.empty() || definition.empty()) {
-        std::cout << "Назва та визначення не можуть бути порожніми.\n";
+    if (name.empty() || def.empty()) {
+        std::cout << "Поля не можуть бути порожніми.\n";
         Pause();
         return;
     }
 
-    // Заборона термін-дублікатів (із урахуванням регістру/мови)
-    if (termManager.FindByName(name) != nullptr) {
-        std::cout << "Термін \"" << name << "\" уже існує у базі.\n";
-        Pause();
-        return;
-    }
-
-    // Визначення не повинно повністю збігатися з назвою
-    if (Utils::ToLowerUTF8(name) == Utils::ToLowerUTF8(definition)) {
-        std::cout << "Визначення не може повністю збігатися з назвою терміна.\n";
-        Pause();
-        return;
-    }
-
-    if (type == 1) {
-        termManager.AddTerm(std::make_shared<PrimitiveTerm>(name, definition));
+    if (t == 1) {
+        termManager.AddTerm(std::make_shared<PrimitiveTerm>(name, def));
         termManager.Save();
-        std::cout << "Первинний термін додано.\n";
-        Pause();
+        std::cout << "Додано первинний термін.\n";
     }
-    else if (type == 2) {
-        std::cout << "Введіть назви термінів, на які є посилання (через кому):\n> ";
-        std::string line;
-        std::getline(std::cin, line);
+    else if (t == 2) {
+        std::cout << "Посилання через кому: ";
+        std::string rline;
+        std::getline(std::cin, rline);
 
         std::vector<std::string> refs;
-        if (!line.empty()) {
-            auto raw = Utils::Split(line, ',');
-            for (auto &r : raw) {
-                r = Utils::Trim(r);
-                if (!r.empty()) {
-                    refs.push_back(r);
-                }
+        if (!rline.empty()) {
+            for (auto &x : Utils::Split(rline, ',')) {
+                if (!Utils::Trim(x).empty())
+                    refs.push_back(Utils::Trim(x));
             }
         }
 
-        // Перевірка на самопосилання
-        bool selfRef = false;
-        for (const auto &r : refs) {
-            if (Utils::ToLowerUTF8(r) == Utils::ToLowerUTF8(name)) {
-                selfRef = true;
-                break;
-            }
-        }
-
-        if (selfRef) {
-            std::cout << "Помилка: термін не може посилатися сам на себе.\n";
-            Pause();
-            return;
-        }
-
-        // Попередження про відсутні посилання
-        bool anyMissing = false;
-        for (const auto &r : refs) {
-            if (!termManager.FindByName(r)) {
-                std::cout << "[ПОПЕРЕДЖЕННЯ] Посилання \"" << r
-                          << "\" відсутнє в базі термінів.\n";
-                anyMissing = true;
-            }
-        }
-
-        if (anyMissing) {
-            std::cout << "Термін буде збережено, але частина посилань поки не існує.\n";
-        }
-
-        termManager.AddTerm(std::make_shared<Term>(name, definition, refs));
+        termManager.AddTerm(std::make_shared<Term>(name, def, refs));
         termManager.Save();
-        std::cout << "Складний термін додано.\n";
-        Pause();
+        std::cout << "Додано складний термін.\n";
     }
-    else {
-        std::cout << "Некоректний тип терміна.\n";
-        Pause();
-    }
+
+    Pause();
 }
 
-// Головне меню
+// ----------------------------------------------------------
+// ГОЛОВНЕ МЕНЮ
+// ----------------------------------------------------------
+
 void ShowMainMenu(const User &currentUser, TermManager &termManager, UserManager &userManager) {
     while (true) {
+
         Banner("ГОЛОВНЕ МЕНЮ");
         std::cout
-            << "1. Список термінів (коротко)\n"
-            << "2. Список термінів (повний)\n"
+            << "1. Список (коротко)\n"
+            << "2. Список (повний)\n"
             << "3. Пошук за назвою\n"
             << "4. Пошук у визначеннях\n"
-            << "5. Додати термін\n"
-            << "6. Редагувати визначення\n"
-            << "7. Видалити термін\n"
-            << "8. Сортування за назвою\n"
-            << "9. Сортування за визначенням\n"
+            << "5. Додати термін  (admin)\n"
+            << "6. Редагувати     (admin)\n"
+            << "7. Видалити       (admin)\n"
+            << "8. Сортувати за назвою (admin)\n"
+            << "9. Сортувати за визначенням (admin)\n"
             << "10. Первинні терміни\n"
             << "11. Складні терміни\n"
             << "12. Ланцюжок терміна\n"
             << "13. Допомога\n"
             << "14. Статистика\n";
 
-        if (currentUser.GetRole() == "admin") {
-            std::cout << "20. Користувачі (адмін)\n";
-        }
+        if (currentUser.GetRole() == "admin")
+            std::cout << "20. Керування користувачами\n";
 
         std::cout << "0. Вихід\n"
-                  << "-----------------------------------------------\n"
                   << "Ваш вибір: ";
 
         int choice;
         if (!(std::cin >> choice)) {
             ClearCin();
-            std::cout << "Некоректне введення.\n";
+            std::cout << "Помилка.\n";
             Pause();
             continue;
         }
@@ -306,144 +245,145 @@ void ShowMainMenu(const User &currentUser, TermManager &termManager, UserManager
 
         switch (choice) {
             case 1:
-                Banner("КОРОТКИЙ СПИСОК ТЕРМІНІВ");
                 termManager.PrintAllShort();
                 Pause();
                 break;
+
             case 2:
-                Banner("ПОВНИЙ СПИСОК ТЕРМІНІВ");
                 termManager.PrintAllFull();
                 Pause();
                 break;
+
             case 3: {
-                Banner("ПОШУК ЗА НАЗВОЮ");
                 std::string name;
-                std::cout << "Назва терміна: ";
+                std::cout << "Назва: ";
                 std::getline(std::cin, name);
-                name = Utils::Trim(name);
-
                 auto t = termManager.FindByName(name);
-                if (!t) {
-                    std::cout << "Термін не знайдено.\n";
-                } else {
-                    std::cout << "\n=== ТЕРМІН: " << t->GetName() << " ===\n";
-                    std::cout << "Визначення:\n    " << t->GetDefinition() << "\n";
-                }
+                if (!t) std::cout << "Не знайдено.\n";
+                else std::cout << t->GetDefinition() << "\n";
                 Pause();
                 break;
             }
+
             case 4: {
-                Banner("ПОШУК У ВИЗНАЧЕННЯХ");
-                std::string frag;
+                std::string s;
                 std::cout << "Фрагмент: ";
-                std::getline(std::cin, frag);
-                termManager.SearchByDefinition(frag);
+                std::getline(std::cin, s);
+                termManager.SearchByDefinition(s);
                 Pause();
                 break;
             }
+
             case 5:
-                HandleAddTerm(termManager);
+                if (currentUser.GetRole() != "admin") {
+                    std::cout << "Недостатньо прав.\n";
+                    Pause();
+                } else HandleAddTerm(termManager);
                 break;
+
             case 6: {
-                Banner("РЕДАГУВАННЯ ВИЗНАЧЕННЯ");
-                std::string name, def;
-                std::cout << "Назва терміна: ";
-                std::getline(std::cin, name);
-                name = Utils::Trim(name);
-
-                std::cout << "Нове визначення:\n> ";
-                std::getline(std::cin, def);
-                def = Utils::Trim(def);
-
-                if (def.empty()) {
-                    std::cout << "Нове визначення не може бути порожнім.\n";
+                if (currentUser.GetRole() != "admin") {
+                    std::cout << "Недостатньо прав.\n";
                     Pause();
                     break;
                 }
 
+                std::string name, def;
+                std::cout << "Назва: ";
+                std::getline(std::cin, name);
+                std::cout << "Нове визначення: ";
+                std::getline(std::cin, def);
+
                 if (termManager.EditDefinition(name, def)) {
                     termManager.Save();
-                    std::cout << "Визначення оновлено.\n";
-                } else {
-                    std::cout << "Термін не знайдено.\n";
-                }
+                    std::cout << "Оновлено.\n";
+                } else std::cout << "Не знайдено.\n";
+
                 Pause();
                 break;
             }
+
             case 7: {
-                Banner("ВИДАЛЕННЯ ТЕРМІНА");
-                std::string name;
-                std::cout << "Назва терміна: ";
-                std::getline(std::cin, name);
-                name = Utils::Trim(name);
-
-                std::string confirm;
-                std::cout << "Видалити \"" << name << "\"? (y/n): ";
-                std::getline(std::cin, confirm);
-
-                if (confirm == "y" || confirm == "Y") {
-                    if (termManager.RemoveTerm(name)) {
-                        termManager.Save();
-                        std::cout << "Термін видалено.\n";
-                    } else {
-                        std::cout << "Термін не знайдено або видалення заборонено.\n";
-                    }
-                } else {
-                    std::cout << "Операцію скасовано.\n";
+                if (currentUser.GetRole() != "admin") {
+                    std::cout << "Недостатньо прав.\n";
+                    Pause();
+                    break;
                 }
+
+                std::string name;
+                std::cout << "Назва: ";
+                std::getline(std::cin, name);
+
+                if (termManager.RemoveTerm(name)) {
+                    termManager.Save();
+                    std::cout << "Видалено.\n";
+                } else std::cout << "Не знайдено.\n";
+
                 Pause();
                 break;
             }
+
             case 8:
-                Banner("СОРТУВАННЯ ЗА НАЗВОЮ");
-                termManager.SortByName();
-                termManager.Save();
-                std::cout << "Список відсортовано.\n";
-                Pause();
+                if (currentUser.GetRole() != "admin") {
+                    std::cout << "Недостатньо прав.\n";
+                    Pause();
+                } else {
+                    termManager.SortByName();
+                    termManager.Save();
+                    std::cout << "Відсортовано.\n";
+                    Pause();
+                }
                 break;
+
             case 9:
-                Banner("СОРТУВАННЯ ЗА ВИЗНАЧЕННЯМ");
-                termManager.SortByDefinition();
-                termManager.Save();
-                std::cout << "Список відсортовано.\n";
-                Pause();
+                if (currentUser.GetRole() != "admin") {
+                    std::cout << "Недостатньо прав.\n";
+                    Pause();
+                } else {
+                    termManager.SortByDefinition();
+                    termManager.Save();
+                    std::cout << "Відсортовано.\n";
+                    Pause();
+                }
                 break;
+
             case 10:
-                Banner("ПЕРВИННІ ТЕРМІНИ");
                 termManager.PrintFilteredByPrimitive(true);
                 Pause();
                 break;
+
             case 11:
-                Banner("СКЛАДНІ ТЕРМІНИ");
                 termManager.PrintFilteredByPrimitive(false);
                 Pause();
                 break;
+
             case 12: {
-                Banner("ЛАНЦЮЖОК ТЕРМІНА");
                 std::string name;
-                std::cout << "Назва терміна: ";
+                std::cout << "Назва: ";
                 std::getline(std::cin, name);
-                name = Utils::Trim(name);
                 termManager.PrintChainFrom(name);
                 Pause();
                 break;
             }
+
             case 13:
                 ShowHelp();
                 break;
+
             case 14:
-                Banner("СТАТИСТИКА БАЗИ ТЕРМІНІВ");
                 termManager.PrintStats();
                 Pause();
                 break;
+
             case 20:
-                if (currentUser.GetRole() == "admin") {
+                if (currentUser.GetRole() == "admin")
                     HandleAdminUserMenu(userManager);
-                } else {
-                    std::cout << "Недостатньо прав для доступу до цього розділу.\n";
+                else {
+                    std::cout << "Недостатньо прав.\n";
                     Pause();
                 }
                 break;
+
             default:
                 std::cout << "Невідомий пункт меню.\n";
                 Pause();
@@ -452,9 +392,10 @@ void ShowMainMenu(const User &currentUser, TermManager &termManager, UserManager
     }
 }
 
-// -------------------------------------------------------------
-//                           MAIN
-// -------------------------------------------------------------
+// ----------------------------------------------------------
+// ГОЛОВНИЙ ВХІД
+// ----------------------------------------------------------
+
 int main() {
     UserManager userManager("users.txt");
     TermManager termManager("terms.csv");
@@ -465,25 +406,25 @@ int main() {
 
     while (true) {
         Banner("СИСТЕМА КЕРУВАННЯ БАЗОЮ ТЕРМІНІВ");
+
         std::cout
             << "1. Увійти\n"
             << "2. Створити нового користувача\n"
             << "3. Допомога\n"
             << "0. Вихід\n"
-            << "-----------------------------------------------\n"
             << "Ваш вибір: ";
 
         int choice;
         if (!(std::cin >> choice)) {
             ClearCin();
-            std::cout << "Некоректне введення.\n";
+            std::cout << "Помилка.\n";
             Pause();
             continue;
         }
         ClearCin();
 
         if (choice == 0) {
-            std::cout << "Завершення роботи.\n";
+            std::cout << "До побачення!\n";
             return 0;
         }
 
@@ -493,38 +434,29 @@ int main() {
         }
 
         if (choice == 2) {
-            Banner("РЕЄСТРАЦІЯ НОВОГО КОРИСТУВАЧА");
-            std::string login, pass, pass2;
+            Banner("РЕЄСТРАЦІЯ");
+            std::string login, pass1, pass2;
 
-            std::cout << "Новий логін: ";
+            std::cout << "Логін: ";
             std::getline(std::cin, login);
-            login = Utils::Trim(login);
 
-            std::cout << "Новий пароль: ";
-            std::getline(std::cin, pass);
-            pass = Utils::Trim(pass);
+            std::cout << "Пароль: ";
+            std::getline(std::cin, pass1);
 
             std::cout << "Повторіть пароль: ";
             std::getline(std::cin, pass2);
-            pass2 = Utils::Trim(pass2);
 
-            if (login.empty() || pass.empty() || pass2.empty()) {
-                std::cout << "Помилка: логін і паролі не можуть бути порожніми.\n";
-                Pause();
-                continue;
-            }
-
-            if (pass != pass2) {
+            if (pass1 != pass2) {
                 std::cout << "Паролі не збігаються.\n";
                 Pause();
                 continue;
             }
 
-            if (userManager.AddUser(login, pass, "user")) {
+            if (userManager.AddUser(login, pass1, "user")) {
                 userManager.Save();
-                std::cout << "Користувача успішно зареєстровано.\n";
+                std::cout << "Реєстрація успішна.\n";
             } else {
-                std::cout << "Користувач із таким логіном уже існує.\n";
+                std::cout << "Такий логін вже існує.\n";
             }
             Pause();
             continue;
@@ -532,27 +464,23 @@ int main() {
 
         if (choice == 1) {
             Banner("АВТОРИЗАЦІЯ");
-            std::string login, pass;
 
+            std::string login, pass;
             std::cout << "Логін: ";
             std::getline(std::cin, login);
-            login = Utils::Trim(login);
 
             std::cout << "Пароль: ";
             std::getline(std::cin, pass);
-            pass = Utils::Trim(pass);
 
             User currentUser;
-            if (userManager.Authenticate(login, pass, currentUser)) {
-                std::cout << "Авторизація успішна.\n";
-                Pause();
 
+            if (userManager.Authenticate(login, pass, currentUser)) {
+                std::cout << "Вхід успішний!\n";
+                Pause();
                 ShowMainMenu(currentUser, termManager, userManager);
 
-                std::cout << "Збереження даних...\n";
                 userManager.Save();
                 termManager.Save();
-                std::cout << "Роботу завершено.\n";
                 return 0;
             } else {
                 std::cout << "Невірний логін або пароль.\n";
@@ -561,7 +489,7 @@ int main() {
             }
         }
 
-        std::cout << "Невідомий пункт меню.\n";
+        std::cout << "Невідомий пункт.\n";
         Pause();
     }
 }
