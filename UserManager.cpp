@@ -1,12 +1,39 @@
+/**
+ * @file UserManager.cpp
+ * @brief Реалізація методів менеджера користувачів.
+ *
+ * Містить логіку для читання/запису бази користувачів, автентифікації
+ * та керування обліковими записами (додавання, видалення).
+ */
+
 #include "UserManager.h"
 #include "Utils.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 
+// -------------------------------------------------------------
+//                     CONSTRUCTOR
+// -------------------------------------------------------------
+
+/**
+ * @brief Конструктор.
+ * @param filePath Шлях до файлу з даними користувачів (наприклад, "users.txt").
+ */
 UserManager::UserManager(const std::string &filePath)
         : filePath(filePath) {}
 
+// -------------------------------------------------------------
+//                     LOAD
+// -------------------------------------------------------------
+
+/**
+ * @brief Завантажує список користувачів з файлу.
+ *
+ * Формат файлу: логін:пароль:роль
+ * Якщо файл не знайдено, виводиться повідомлення, але помилка не кидається
+ * (файл буде створено пізніше при збереженні).
+ */
 void UserManager::Load() {
     users.clear();
     std::ifstream in(filePath);
@@ -21,6 +48,7 @@ void UserManager::Load() {
             if (line.empty()) {
                 continue;
             }
+            // Використовуємо роздільник ':' для формату users.txt
             auto parts = Utils::Split(line, ':');
             if (parts.size() < 3) {
                 continue;
@@ -35,6 +63,16 @@ void UserManager::Load() {
     }
 }
 
+// -------------------------------------------------------------
+//                     SAVE
+// -------------------------------------------------------------
+
+/**
+ * @brief Зберігає поточний список користувачів у файл.
+ *
+ * Перезаписує файл повністю. Дані зберігаються у форматі:
+ * username:password:role
+ */
 void UserManager::Save() const {
     std::ofstream out(filePath);
     if (!out.is_open()) {
@@ -51,6 +89,17 @@ void UserManager::Save() const {
     }
 }
 
+// -------------------------------------------------------------
+//                 ENSURE DEFAULT ADMIN
+// -------------------------------------------------------------
+
+/**
+ * @brief Перевіряє наявність адміністратора в базі.
+ *
+ * Якщо користувача з логіном "admin" не існує, створює його
+ * зі стандартним паролем "admin" і зберігає базу.
+ * Це гарантує, що в систему завжди можна увійти.
+ */
 void UserManager::EnsureDefaultAdmin() {
     bool hasAdmin = false;
     for (const auto &u : users) {
@@ -66,6 +115,17 @@ void UserManager::EnsureDefaultAdmin() {
     }
 }
 
+// -------------------------------------------------------------
+//                     AUTHENTICATE
+// -------------------------------------------------------------
+
+/**
+ * @brief Перевіряє правильність логіна та пароля.
+ * @param login Введений логін.
+ * @param password Введений пароль.
+ * @param outUser Посилання на об'єкт User, куди будуть записані дані знайденого користувача.
+ * @return true, якщо аутентифікація успішна (дані збігаються).
+ */
 bool UserManager::Authenticate(const std::string &login,
                                const std::string &password,
                                User &outUser) const {
@@ -78,9 +138,21 @@ bool UserManager::Authenticate(const std::string &login,
     return false;
 }
 
+// -------------------------------------------------------------
+//                     ADD USER
+// -------------------------------------------------------------
+
+/**
+ * @brief Додає нового користувача.
+ * @param username Логін.
+ * @param password Пароль.
+ * @param role Роль ("user" або "admin").
+ * @return true, якщо користувача успішно додано; false, якщо такий логін вже існує.
+ */
 bool UserManager::AddUser(const std::string &username,
                           const std::string &password,
                           const std::string &role) {
+    // Перевірка на унікальність логіна
     auto it = std::find_if(users.begin(), users.end(),
                            [&username](const User &u) {
                                return u.GetUsername() == username;
@@ -92,6 +164,17 @@ bool UserManager::AddUser(const std::string &username,
     return true;
 }
 
+// -------------------------------------------------------------
+//                     REMOVE USER
+// -------------------------------------------------------------
+
+/**
+ * @brief Видаляє користувача за логіном.
+ *
+ * @note Заборонено видаляти користувача з логіном "admin" (super-admin).
+ * @param username Логін користувача.
+ * @return true, якщо користувача знайдено і видалено.
+ */
 bool UserManager::RemoveUser(const std::string &username) {
     if (username == "admin") {
         std::cout << "Видалення адміністратора заборонено." << std::endl;
@@ -106,6 +189,14 @@ bool UserManager::RemoveUser(const std::string &username) {
     return removed;
 }
 
+// -------------------------------------------------------------
+//                     GETTERS
+// -------------------------------------------------------------
+
+/**
+ * @brief Отримує список усіх користувачів.
+ * @return Константне посилання на вектор користувачів.
+ */
 const std::vector<User> &UserManager::GetUsers() const {
     return users;
 }

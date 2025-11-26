@@ -1,3 +1,11 @@
+/**
+ * @file TermManager.cpp
+ * @brief Реалізація класу керування базою термінів.
+ *
+ * Містить логіку для CRUD-операцій (створення, читання, оновлення, видалення),
+ * сортування, фільтрації, збереження у файл та побудови ланцюжків залежностей.
+ */
+
 #include "TermManager.h"
 #include "Term.h"
 #include "PrimitiveTerm.h"
@@ -7,16 +15,29 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <iomanip> // Для форматування виводу (std::setw)
 
 // -------------------------------------------------------------
 //                     CONSTRUCTOR
 // -------------------------------------------------------------
+
+/**
+ * @brief Конструктор менеджера.
+ * @param filePath Шлях до файлу CSV, де зберігається база термінів.
+ */
 TermManager::TermManager(const std::string &filePath)
         : filePath(filePath) {}
 
 // -------------------------------------------------------------
 //                     LOAD
 // -------------------------------------------------------------
+
+/**
+ * @brief Завантажує список термінів з файлу.
+ *
+ * Читає файл рядково, розбиває CSV (враховуючи екранування),
+ * визначає тип терміна (PRIM або TERM) та створює відповідні об'єкти.
+ */
 void TermManager::Load() {
     terms.clear();
     std::ifstream in(filePath);
@@ -30,7 +51,10 @@ void TermManager::Load() {
         while (std::getline(in, line)) {
             if (line.empty()) continue;
 
+            // Використовуємо наш покращений Utils::Split, що враховує екранування ';'
             auto parts = Utils::Split(line, ';');
+            
+            // Очікуємо мінімум 4 поля: TYPE;Name;Def;Refs
             if (parts.size() < 4) continue;
 
             std::string type = parts[0];
@@ -64,6 +88,12 @@ void TermManager::Load() {
 // -------------------------------------------------------------
 //                     SAVE
 // -------------------------------------------------------------
+
+/**
+ * @brief Зберігає всі терміни у файл.
+ *
+ * Викликає метод Serialize() для кожного об'єкта та записує результат у файл.
+ */
 void TermManager::Save() const {
     std::ofstream out(filePath);
     if (!out.is_open()) {
@@ -79,6 +109,12 @@ void TermManager::Save() const {
 // -------------------------------------------------------------
 //                     FIND (CASE-INSENSITIVE)
 // -------------------------------------------------------------
+
+/**
+ * @brief Шукає термін за назвою (без урахування регістру).
+ * @param name Назва шуканого терміна.
+ * @return Розумний вказівник на термін або nullptr, якщо не знайдено.
+ */
 std::shared_ptr<TermBase> TermManager::FindByName(const std::string &name) const {
     std::string target = Utils::ToLowerUTF8(name);
 
@@ -93,6 +129,12 @@ std::shared_ptr<TermBase> TermManager::FindByName(const std::string &name) const
 // -------------------------------------------------------------
 //                     ADD TERM
 // -------------------------------------------------------------
+
+/**
+ * @brief Додає новий термін у базу (тільки в пам'ять).
+ * @param term Вказівник на створений об'єкт терміна.
+ * @note Для збереження на диску потрібно викликати Save().
+ */
 void TermManager::AddTerm(const std::shared_ptr<TermBase> &term) {
     terms.push_back(term);
 }
@@ -100,10 +142,19 @@ void TermManager::AddTerm(const std::shared_ptr<TermBase> &term) {
 // -------------------------------------------------------------
 //                 CHECK IF TERM IS REFERENCED
 // -------------------------------------------------------------
+
+/**
+ * @brief Перевіряє, чи використовується термін у визначеннях інших термінів.
+ *
+ * Це необхідно для забезпечення цілісності даних перед видаленням.
+ * @param name Назва терміна.
+ * @return true, якщо термін згадується у посиланнях інших термінів.
+ */
 bool TermManager::IsReferenced(const std::string &name) const {
     std::string target = Utils::ToLowerUTF8(name);
 
     for (const auto &t : terms) {
+        // Первинні терміни не мають посилань, пропускаємо їх
         if (!t->IsPrimitive()) {
             auto termPtr = std::dynamic_pointer_cast<Term>(t);
             if (!termPtr) continue;
@@ -121,6 +172,14 @@ bool TermManager::IsReferenced(const std::string &name) const {
 // -------------------------------------------------------------
 //                REMOVE TERM (CASE-INSENSITIVE)
 // -------------------------------------------------------------
+
+/**
+ * @brief Видаляє термін за назвою.
+ *
+ * Перед видаленням перевіряє цілісність посилань (IsReferenced).
+ * @param name Назва терміна.
+ * @return true, якщо видалення успішне, false — якщо не знайдено або заборонено.
+ */
 bool TermManager::RemoveTerm(const std::string &name) {
     if (IsReferenced(name)) {
         std::cout << "[ПОМИЛКА] Неможливо видалити термін \"" << name
@@ -134,8 +193,7 @@ bool TermManager::RemoveTerm(const std::string &name) {
         terms.begin(),
         terms.end(),
         [&](const std::shared_ptr<TermBase> &t) {
-            return Utils::ToLowerUTF8(t->GetName()) == target
-;
+            return Utils::ToLowerUTF8(t->GetName()) == target;
         }
     );
 
@@ -147,6 +205,13 @@ bool TermManager::RemoveTerm(const std::string &name) {
 // -------------------------------------------------------------
 //                EDIT DEFINITION (CASE-INSENSITIVE)
 // -------------------------------------------------------------
+
+/**
+ * @brief Змінює визначення існуючого терміна.
+ * @param name Назва терміна.
+ * @param newDefinition Новий текст визначення.
+ * @return true, якщо успішно оновлено.
+ */
 bool TermManager::EditDefinition(const std::string &name, const std::string &newDefinition) {
     auto term = FindByName(name);
     if (!term) return false;
@@ -158,6 +223,10 @@ bool TermManager::EditDefinition(const std::string &name, const std::string &new
 // -------------------------------------------------------------
 //                     SORTING
 // -------------------------------------------------------------
+
+/**
+ * @brief Сортує терміни за назвою в алфавітному порядку.
+ */
 void TermManager::SortByName() {
     std::sort(terms.begin(), terms.end(),
               [](const std::shared_ptr<TermBase> &a,
@@ -168,7 +237,9 @@ void TermManager::SortByName() {
               });
 }
 
-
+/**
+ * @brief Сортує терміни за текстом визначення.
+ */
 void TermManager::SortByDefinition() {
     std::sort(terms.begin(), terms.end(),
               [](const std::shared_ptr<TermBase> &a,
@@ -183,6 +254,10 @@ void TermManager::SortByDefinition() {
 // -------------------------------------------------------------
 //                  PRINT SHORT LIST
 // -------------------------------------------------------------
+
+/**
+ * @brief Виводить короткий список термінів (тільки назви).
+ */
 void TermManager::PrintAllShort() const {
     if (terms.empty()) {
         std::cout << "База термінів порожня." << std::endl;
@@ -200,6 +275,10 @@ void TermManager::PrintAllShort() const {
 // -------------------------------------------------------------
 //                   PRINT FULL LIST
 // -------------------------------------------------------------
+
+/**
+ * @brief Виводить повну інформацію про всі терміни.
+ */
 void TermManager::PrintAllFull() const {
     if (terms.empty()) {
         std::cout << "База термінів порожня." << std::endl;
@@ -213,15 +292,18 @@ void TermManager::PrintAllFull() const {
         std::cout << "Визначення: " << basePtr->GetDefinition() << std::endl;
 
         if (!basePtr->IsPrimitive()) {
+            // Безпечне приведення типу для доступу до посилань
             auto termPtr = std::dynamic_pointer_cast<Term>(basePtr);
             std::cout << "Посилання: ";
-
-            const auto &refs = termPtr->GetReferences();
-            if (refs.empty()) std::cout << "немає";
-            else {
-                for (size_t i = 0; i < refs.size(); ++i) {
-                    if (i > 0) std::cout << ", ";
-                    std::cout << refs[i];
+            
+            if (termPtr) {
+                const auto &refs = termPtr->GetReferences();
+                if (refs.empty()) std::cout << "немає";
+                else {
+                    for (size_t i = 0; i < refs.size(); ++i) {
+                        if (i > 0) std::cout << ", ";
+                        std::cout << refs[i];
+                    }
                 }
             }
         } else {
@@ -235,6 +317,11 @@ void TermManager::PrintAllFull() const {
 // -------------------------------------------------------------
 //               SEARCH IN DEFINITIONS (CASE-INSENSITIVE)
 // -------------------------------------------------------------
+
+/**
+ * @brief Шукає терміни, визначення яких містить заданий підрядок.
+ * @param substring Фрагмент тексту для пошуку.
+ */
 void TermManager::SearchByDefinition(const std::string &substring) const {
     if (substring.empty()) {
         std::cout << "Порожній запит." << std::endl;
@@ -261,6 +348,11 @@ void TermManager::SearchByDefinition(const std::string &substring) const {
 // -------------------------------------------------------------
 //                   FILTER BY TYPE
 // -------------------------------------------------------------
+
+/**
+ * @brief Виводить терміни лише певного типу (Primitive або Term).
+ * @param primitiveOnly Якщо true - виводить тільки первинні, інакше - тільки складні.
+ */
 void TermManager::PrintFilteredByPrimitive(bool primitiveOnly) const {
     bool any = false;
 
@@ -277,15 +369,27 @@ void TermManager::PrintFilteredByPrimitive(bool primitiveOnly) const {
 // -------------------------------------------------------------
 //               CHAIN (RECURSIVE)
 // -------------------------------------------------------------
+
+/**
+ * @brief Рекурсивно виводить ланцюжок залежностей терміна.
+ * * Це ключова функція для індивідуального завдання. Вона будує дерево
+ * понять від складного до простих.
+ *
+ * @param name Назва поточного терміна.
+ * @param visited Множина відвіданих термінів (для захисту від циклічних посилань).
+ * @param level Рівень вкладеності (для відступів).
+ */
 void TermManager::PrintChainRecursive(const std::string &name,
                                       std::unordered_set<std::string> &visited,
                                       int level) const {
 
+    // Форматування відступу залежно від рівня рекурсії
     for (int i = 0; i < level; i++) std::cout << "  ";
-    std::cout << "→ " << name << std::endl;
+    std::cout << "-> " << name << std::endl;
 
     std::string key = Utils::ToLowerUTF8(name);
 
+    // Захист від нескінченної рекурсії (циклів)
     if (visited.count(key)) {
         for (int i = 0; i < level; i++) std::cout << "  ";
         std::cout << "[ЦИКЛ У ПОСИЛАННЯХ]\n";
@@ -296,17 +400,24 @@ void TermManager::PrintChainRecursive(const std::string &name,
 
     auto ptr = FindByName(name);
     if (!ptr) {
-        std::cout << "[ПОМИЛКА] Термін не знайдено.\n";
+        for (int i = 0; i < level + 1; i++) std::cout << "  ";
+        std::cout << "[!] Термін не знайдено в базі.\n";
         return;
     }
 
+    // Базовий випадок рекурсії: первинне поняття
     if (ptr->IsPrimitive()) {
-        for (int i = 0; i < level; i++) std::cout << "  ";
+        for (int i = 0; i < level + 1; i++) std::cout << "  ";
         std::cout << "(первинне поняття)\n";
         return;
     }
 
+    // Рекурсивний випадок: складний термін
     auto t = std::dynamic_pointer_cast<Term>(ptr);
+    
+    // Додана перевірка безпеки
+    if (!t) return; 
+
     for (const auto &r : t->GetReferences()) {
         PrintChainRecursive(r, visited, level + 1);
     }
@@ -315,6 +426,11 @@ void TermManager::PrintChainRecursive(const std::string &name,
 // -------------------------------------------------------------
 //                   CHAIN ENTRY
 // -------------------------------------------------------------
+
+/**
+ * @brief Публічна обгортка для запуску побудови ланцюжка.
+ * @param name Назва початкового терміна.
+ */
 void TermManager::PrintChainFrom(const std::string &name) const {
     if (!FindByName(name)) {
         std::cout << "Термін \"" << name << "\" не знайдено.\n";
@@ -330,6 +446,10 @@ void TermManager::PrintChainFrom(const std::string &name) const {
 // -------------------------------------------------------------
 //               AUTO-FILL DEFAULT TERMS
 // -------------------------------------------------------------
+
+/**
+ * @brief Заповнює базу тестовими даними, якщо вона порожня.
+ */
 void TermManager::EnsureDefaultTerms() {
     if (!terms.empty()) return;
 
@@ -358,6 +478,10 @@ void TermManager::EnsureDefaultTerms() {
 // -------------------------------------------------------------
 //                     STATISTICS
 // -------------------------------------------------------------
+
+/**
+ * @brief Виводить загальну статистику по базі даних.
+ */
 void TermManager::PrintStats() const {
     int total = terms.size();
     int prim = 0;

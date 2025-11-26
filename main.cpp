@@ -1,7 +1,19 @@
+/**
+ * @file main.cpp
+ * @brief Головний файл програми.
+ *
+ * Містить точку входу (main), реалізацію консольного меню,
+ * обробку вводу користувача та виклики менеджерів (TermManager, UserManager).
+ */
+
 #include <iostream>
 #include <string>
 #include <limits>
 #include <memory>
+
+#ifdef _WIN32
+#include <windows.h> // Для налаштування кодування консолі у Windows
+#endif
 
 #include "UserManager.h"
 #include "TermManager.h"
@@ -13,16 +25,33 @@
 // СЛУЖБОВІ ФУНКЦІЇ
 // ----------------------------------------------------------
 
+/**
+ * @brief Зупиняє виконання програми до натискання клавіші Enter.
+ *
+ * Використовується для того, щоб користувач встиг прочитати інформацію
+ * перед очищенням екрану або переходом до наступного меню.
+ */
 void Pause() {
     std::cout << "\n(Натисніть Enter, щоб продовжити...)";
+    // Ігноруємо все, що залишилось у буфері, до символу нового рядка
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+/**
+ * @brief Очищає потік вводу std::cin.
+ *
+ * Скидає прапори помилок (std::cin.clear()) та видаляє зайві символи з буфера.
+ * Використовується після вводу чисел, щоб уникнути проблем з std::getline.
+ */
 void ClearCin() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+/**
+ * @brief Виводить заголовок (банер) у консоль.
+ * @param title Текст заголовка.
+ */
 void Banner(const std::string &title) {
     std::cout << "\n===============================================" << std::endl;
     std::cout << "  " << title << std::endl;
@@ -33,6 +62,11 @@ void Banner(const std::string &title) {
 // ДОПОМОГА
 // ----------------------------------------------------------
 
+/**
+ * @brief Виводить детальну інструкцію користувача.
+ *
+ * Описує правила вводу, формат файлів та доступні команди.
+ */
 void ShowHelp() {
     Banner("ІНСТРУКЦІЯ КОРИСТУВАЧА");
 
@@ -96,6 +130,12 @@ void ShowHelp() {
 // МЕНЮ АДМІНІСТРАТОРА
 // ----------------------------------------------------------
 
+/**
+ * @brief Обробляє меню керування користувачами (тільки для Admin).
+ *
+ * Дозволяє переглядати, додавати та видаляти користувачів.
+ * @param userManager Посилання на менеджер користувачів.
+ */
 void HandleAdminUserMenu(UserManager &userManager) {
     while (true) {
         Banner("МЕНЮ АДМІНА — КОРИСТУВАЧІ");
@@ -108,12 +148,13 @@ void HandleAdminUserMenu(UserManager &userManager) {
             << "Ваш вибір: ";
 
         int choice;
+        // Перевірка на коректність вводу числа
         if (!(std::cin >> choice)) {
             ClearCin();
             std::cout << "Некоректне введення.\n";
             continue;
         }
-        ClearCin();
+        ClearCin(); // Очистка буфера після вводу числа
 
         if (choice == 0) return;
 
@@ -183,6 +224,13 @@ void HandleAdminUserMenu(UserManager &userManager) {
 // ДОДАВАННЯ ТЕРМІНА
 // ----------------------------------------------------------
 
+/**
+ * @brief Інтерфейс додавання нового терміна.
+ *
+ * Запитує у користувача тип терміна (Primitive/Term), назву, визначення
+ * та посилання (якщо це складний термін).
+ * @param termManager Посилання на менеджер термінів.
+ */
 void HandleAddTerm(TermManager &termManager) {
     Banner("ДОДАВАННЯ ТЕРМІНА");
 
@@ -224,6 +272,7 @@ void HandleAddTerm(TermManager &termManager) {
 
         std::vector<std::string> refs;
         if (!rline.empty()) {
+            // Використовуємо наш оновлений Utils::Split, який враховує екранування
             for (auto &x : Utils::Split(rline, ',')) {
                 if (!Utils::Trim(x).empty())
                     refs.push_back(Utils::Trim(x));
@@ -242,6 +291,13 @@ void HandleAddTerm(TermManager &termManager) {
 // ГОЛОВНЕ МЕНЮ
 // ----------------------------------------------------------
 
+/**
+ * @brief Відображає головне меню програми після авторизації.
+ *
+ * @param currentUser Поточний авторизований користувач.
+ * @param termManager Менеджер термінів.
+ * @param userManager Менеджер користувачів (для адмін-меню).
+ */
 void ShowMainMenu(const User &currentUser, TermManager &termManager, UserManager &userManager) {
     while (true) {
 
@@ -432,12 +488,26 @@ void ShowMainMenu(const User &currentUser, TermManager &termManager, UserManager
 // ГОЛОВНИЙ ВХІД
 // ----------------------------------------------------------
 
+/**
+ * @brief Точка входу в програму.
+ *
+ * Ініціалізує менеджери, налаштовує консоль (Windows CP65001),
+ * завантажує дані та запускає цикл авторизації.
+ * @return Код завершення (0 - успіх).
+ */
 int main() {
+    // Встановлення кодування UTF-8 для коректного відображення кирилиці (Windows)
+#ifdef _WIN32
+    SetConsoleOutputCP(65001);
+    SetConsoleCP(65001);
+#endif
+
     UserManager userManager("users.txt");
     TermManager termManager("terms.csv");
 
+    // Завантаження даних з файлів
     userManager.Load();
-    userManager.EnsureDefaultAdmin();
+    userManager.EnsureDefaultAdmin(); // Створення адміна, якщо база порожня
     termManager.Load();
 
     while (true) {
@@ -515,6 +585,7 @@ int main() {
                 Pause();
                 ShowMainMenu(currentUser, termManager, userManager);
 
+                // Зберігаємо зміни при виході з головного меню
                 userManager.Save();
                 termManager.Save();
                 return 0;
